@@ -1,1 +1,1 @@
-from projectRes.motors.motor import motorController
+from projectRes.motors.motor import *

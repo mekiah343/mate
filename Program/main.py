@@ -1,7 +1,18 @@
 import pygame
 import serial
 import re
+import sys
+import glob
 from projectRes.motors.motor import motorController
+
+print("Booting MUROVISP...")
+
+
+
+
+
+
+
 
 # ______________________________________________
 # Text drawing functions
@@ -29,6 +40,109 @@ class TextPrint:
     def unindent(self):
         self.x -= 10
 
+# ______________________________________________
+# Extras for ease of use
+# ______________________________________________
+def consoleBreakLine(_breaks=1):
+    for i in range(_breaks):
+        print("")
+
+
+# ______________________________________________
+# Serial Port Connection
+# ______________________________________________
+
+def getPort(_prompt):
+    availablePorts = serial_ports()
+    # Check if the specified port index exists
+    for i, port in enumerate(availablePorts):
+        print(str(i) + ": " + port)
+
+    consoleBreakLine()
+
+    index = raw_input(_prompt)
+
+    if index == '':
+        consoleBreakLine(2)
+        return False
+
+
+
+    # Check if the input is an int
+    try:
+        index = int(index)
+    except ValueError:
+        raw_input('[Error]: Input not an intiger. Press enter to continue.')
+        consoleBreakLine()
+        getPort(_prompt)
+
+    # Attempt to get an index of the ports list, method restarts if index does not exist
+    try:
+        selectedPort = availablePorts[index]
+        return selectedPort
+    except IndexError:
+        raw_input('[Error]: Port not available, select a valid port. Press enter to continue.')
+        consoleBreakLine()
+        getPort(_prompt)
+
+# Returns a list of serial ports
+def serial_ports():
+    """ Lists serial port names
+
+        :raises EnvironmentError:
+            On unsupported or unknown platforms
+        :returns:
+            A list of the serial ports available on the system
+    """
+    if sys.platform.startswith('win'):
+        ports = ['COM%s' % (i + 1) for i in range(256)]
+    elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+        # this excludes your current terminal "/dev/tty"
+        ports = glob.glob('/dev/tty[A-Za-z]*')
+    elif sys.platform.startswith('darwin'):
+        ports = glob.glob('/dev/tty.*')
+    else:
+        raise EnvironmentError('Unsupported platform')
+
+    result = []
+    for port in ports:
+        try:
+            s = serial.Serial(port)
+            s.close()
+            result.append(port)
+        except (OSError, serial.SerialException):
+            pass
+    return result
+
+# Add a break
+
+# __name__ is a special variable in python set when the program first runs, it returns '__main__'
+# unless it is in a module
+if __name__ == '__main__':
+    # Puts index in 'i' and port in 'port' and then I print them out for easy selection
+    consoleBreakLine()
+
+    moterPort = getPort("Select a port for moters: ")
+
+    #clawPort = getPort("Select a port for claw: ")
+
+
+
+# ______________________________________________
+# Serial communication variable initializations
+# ______________________________________________
+
+# Defineing serial port
+
+if moterPort != False:
+    moterArduino = serial.Serial(moterPort, 9600) # Establish the connection on a specific port
+# if clawPort != False:
+#     clawArduino = serial.Serial(clawPort, 9600) # Establish the connection on a specific port
+
+# Serial packet variables
+packet = ""
+packet_rec = False
+inbyte = ""
 
     
 
@@ -72,18 +186,6 @@ DW_HALF = DISPLAY_WIDTH / 2
 DH_HALF = DISPLAY_HEIGHT / 2
 
 # ______________________________________________
-# Serial communication variable initializations
-# ______________________________________________
-
-# Defineing serial port
-ser = serial.Serial('/dev/cu.usbmodem1411', 9600) # Establish the connection on a specific port
-
-# Serial packet variables
-packet = ""
-packet_rec = False
-inbyte = ""
-
-# ______________________________________________
 # Moter object initializations
 # ______________________________________________
 #   + First parameter is the control scheme
@@ -109,9 +211,93 @@ topLeftMotor = motorController(
                 -1:0
             },
             "joystick2yStates":{
+                1:-1,
+                0:0,
+                -1:1
+            }
+        }
+    ],
+    -0.00390625
+)
+
+topRightMotor = motorController(
+    [        
+        {
+            "joystick1xStates":{
                 1:1,
                 0:0,
                 -1:-1
+            },
+            "joystick1yStates":{
+                1:0,
+                0:0,
+                -1:0
+            },
+            "joystick2xStates":{
+                1:0,
+                0:0,
+                -1:0
+            },
+            "joystick2yStates":{
+                1:-1,
+                0:0,
+                -1:1
+            }
+        }
+    ],
+    -0.00390625
+)
+
+bottomLeftMotor = motorController(
+    [        
+        {
+            "joystick1xStates":{
+                1:0,
+                0:0,
+                -1:0
+            },
+            "joystick1yStates":{
+                1:1,
+                0:0,
+                -1:-1
+            },
+            "joystick2xStates":{
+                1:-1,
+                0:0,
+                -1:1
+            },
+            "joystick2yStates":{
+                1:0,
+                0:0,
+                -1:0
+            }
+        }
+    ],
+    -0.00390625
+)
+
+bottomRightMotor = motorController(
+    [        
+        {
+            "joystick1xStates":{
+                1:0,
+                0:0,
+                -1:0
+            },
+            "joystick1yStates":{
+                1:1,
+                0:0,
+                -1:-1
+            },
+            "joystick2xStates":{
+                1:1,
+                0:0,
+                -1:-1
+            },
+            "joystick2yStates":{
+                1:0,
+                0:0,
+                -1:0
             }
         }
     ],
@@ -191,130 +377,45 @@ while done == False:
     pygame.draw.circle(screen, (255,255,255), (DW_HALF + motorVisualOffsetX, DH_HALF + motorVisualOffsetY), 100, 0)    # EVENT PROCESSING STEP
     
 
+    # ______________________________________________
+    # Moter updating and serial communication
+    # ______________________________________________
+
+
     # Axis 1 = L joystick horizontal, Axis 2 = L joystick vertical, Axis 2 is some conbination of all axis, Axis 3 = R joystick horizonal, Axis 4 = R joystick vertical
     topLeftMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
-    #print(topLeftMotor.moterOutput)
+    
+    topRightMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
 
-    button = joystick.get_button( i )
+    bottomLeftMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
+
+    bottomRightMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
+
 
     topLeftMoterByte = str(speedCharList[int(round((topLeftMotor.moterOutput + 0.004) * 10)) + 10])
+
+    topRightMotorByte = str(speedCharList[int(round((topRightMotor.moterOutput + 0.004) * 10)) + 10])
+
+    bottomLeftMotorByte = str(speedCharList[int(round((bottomLeftMotor.moterOutput + 0.004) * 10)) + 10])
+
+    bottomRightMotorByte = str(speedCharList[int(round((bottomRightMotor.moterOutput + 0.004) * 10)) + 10])
+
+    button = str(joystick.get_button(7))
     
-    messageToArduino = "{" + topLeftMoterByte + str(speedCharList[motor1]) + str(speedCharList[motor2]) + str(speedCharList[motor3]) + str(joystick.get_button(7)) + "}"
-    print(messageToArduino)
-    ser.write(messageToArduino) #message to arduino
-
-
-
-    # Top left
-
-
-    if int(round(joystick.get_axis(0) + 0.004)) < 0:
-        pygame.draw.circle(screen, (0,255,0), (DW_HALF -40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP  
-        motor0 = int(round((joystick.get_axis(0) + 0.004) * 10)) + 10
-    elif int(round(joystick.get_axis(0) + 0.004)) > 0:
-        pygame.draw.circle(screen, (255,0,0), (DW_HALF -40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor0 = int(round((joystick.get_axis(0) + 0.004) * 10)) + 10
-    elif int(round(joystick.get_axis(4) + 0.004)) > 0:
-        pygame.draw.circle(screen, (255,0,0), (DW_HALF -40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor0 = int(round((joystick.get_axis(4) + 0.004) * 10)) + 10
-    elif int(round(joystick.get_axis(4) + 0.004)) < 0:
-        pygame.draw.circle(screen, (0,255,0), (DW_HALF -40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor0 = int(round((joystick.get_axis(4) + 0.004) * 10)) + 10  
-    else:
-        pygame.draw.circle(screen, (0,0,0), (DW_HALF -40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor0 = 10   
     
-    # Top right
-    #right
-    if int(round(joystick.get_axis(0) + 0.004)) > 0:
-        pygame.draw.circle(screen, (0,255,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor1 = int(round((joystick.get_axis(0) + 0.004) * -10)) + 10 
-    #left
-    elif int(round(joystick.get_axis(0) + 0.004)) < 0:
-        pygame.draw.circle(screen, (255,0,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor1 = int(round((joystick.get_axis(0) + 0.004) * -10)) + 10
-    elif int(round(joystick.get_axis(4) + 0.004)) > 0:
-        pygame.draw.circle(screen, (255,0,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP 
-        motor1 = int(round((joystick.get_axis(4) + 0.004) * 10)) + 10
-    elif int(round(joystick.get_axis(4) + 0.004)) < 0:
-        pygame.draw.circle(screen, (0,255,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor1 = int(round((joystick.get_axis(4) + 0.004) * 10)) + 10
-    else:
-        pygame.draw.circle(screen, (0,0,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF - 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP 
-        motor1 = 10  
+    # Compiling the moter speeds into one packet for the arduino
+    messageToMoterArduino = "{" + topLeftMoterByte + topRightMotorByte + bottomLeftMotorByte + bottomRightMotorByte + button + "}"
+    print(messageToMoterArduino)
+    moterArduino.write(messageToMoterArduino) #message to arduino
 
-    # Bottom right motor
-    if int(round(joystick.get_axis(1) + 0.004)) > 0:
-        pygame.draw.circle(screen, (255,0,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor2 = int(round((joystick.get_axis(1) + 0.004) * 10)) + 10
-    elif int(round(joystick.get_axis(1) + 0.004)) < 0:
-        pygame.draw.circle(screen, (0,255,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP 
-        motor2 = int(round((joystick.get_axis(1) + 0.004) * 10)) + 10
-        #right
-    elif int(round(joystick.get_axis(3) + 0.004)) > 0:
-        pygame.draw.circle(screen, (255,0,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor2 = int(round((joystick.get_axis(3) + 0.004) * -10)) + 10
-        #left
-    elif int(round(joystick.get_axis(3) + 0.004)) < 0:
-        pygame.draw.circle(screen, (0,255,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor2 = int(round((joystick.get_axis(3) + 0.004) * -10)) + 10
-    else:
-        pygame.draw.circle(screen, (0,0,0), (DW_HALF + 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor2 = 10
-
-    # Bottom left motor
-    if int(round(joystick.get_axis(1) + 0.004)) > 0:
-        pygame.draw.circle(screen, (255,0,0), (DW_HALF - 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor3 = int(round((joystick.get_axis(1) + 0.004) * 10)) + 10
-    elif int(round(joystick.get_axis(1) + 0.004)) < 0:
-        pygame.draw.circle(screen, (0,255,0), (DW_HALF - 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor3 = int(round((joystick.get_axis(1) + 0.004) * 10)) + 10
-        #right
-    elif int(round(joystick.get_axis(3) + 0.004)) > 0:
-        pygame.draw.circle(screen, (0,255,0), (DW_HALF - 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor3 = int(round((joystick.get_axis(3) + 0.004) * 10)) + 10
-        #left
-    elif int(round(joystick.get_axis(3) + 0.004)) < 0:
-        pygame.draw.circle(screen, (255,0,0), (DW_HALF - 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor3 = int(round((joystick.get_axis(3) + 0.004) * 10)) + 10
-    else:
-        pygame.draw.circle(screen, (0,0,0), (DW_HALF - 40 + motorVisualOffsetX, DH_HALF + 40 + motorVisualOffsetY), 20, 0)    # EVENT PROCESSING STEP
-        motor3 = 10
+    # if clawPort != False:
+    #     messageToClawArduino = button
+    #     clawArduino.write(messageToClawArduino)
 
     
     pygame.draw.circle(screen, (255,255,255), (DW_HALF + joystickVisualOffsetX + int(round((joystick.get_axis(0) * 30))), DH_HALF + joystickVisualOffsetY + int(round(joystick.get_axis(1) * 30))), 20, 0)    # EVENT PROCESSING STEP
 
 
-
-
-
-
-    # # Top left motor
-    # motor0 = int(round((joystick.get_axis(0) + 0.004) * 10)) + 10
-
-    # # Top right motor
-    # motor1 = int(round((joystick.get_axis(1) + 0.004) * 10)) + 10
-
-    # # Bottom right motor
-    # motor2 = int(round((joystick.get_axis(2) + 0.004) * 10)) + 10
-    
-    # # Bottom left motor
-    # motor3 = int(round((joystick.get_axis(3) + 0.004) * 10)) + 10
-
-   
-   
-    # inbyte = ser.readline()
-    # if packet_rec == True:
-    #     packet += inbyte
-    #     if str(inbyte) == "}":
-    #         print "InPacket = " + packet
-    #         packet_rec = False
-    #         packet = ""
-    # elif str(inbyte) == "{":
-    #     packet_rec = True
-    #     packet += inbyte
-        
-    #print ser.readline() #read from arduino
 
     textPrint.indent()
     for i in range( axes ):
@@ -332,19 +433,10 @@ while done == False:
         button = joystick.get_button( i )
         textPrint.drawText(screen, "Button {:>2} value: {}".format(i,button) )
     textPrint.unindent()
-        
-    # Hat switch. All or nothing for direction, not like joysticks.
-    # Value comes back in an array.
-    # hats = joystick.get_numhats()
-    # textPrint.drawText(screen, "Number of hats: {}".format(hats) )
-    # textPrint.indent()
-
-    # for i in range( hats ):
-    #     hat = joystick.get_hat( i )
-    #     textPrint.drawText(screen, "Hat {} value: {}".format(i, str(hat)) )
-    
-    if ser.in_waiting > 0:
-        pot = ser.readline()
+   
+    if moterPort != False:
+        if moterArduino.in_waiting > 0:
+            pot = moterArduino.readline()
 
     # print(pot)
     textPrint.drawText(screen, "Diagnostics:")
@@ -364,5 +456,5 @@ while done == False:
 # Close the window and quit.
 # If you forget this line, the program will 'hang'
 # on exit if running from IDLE.
-ser.close()
+moterArduino.close()
 pygame.quit ()

@@ -1,7 +1,7 @@
 from __future__ import division
 
 class motorController:
-	def __init__(self, states, joystickOffset):
+	def __init__(self , states, joystickOffset):
 		# Defining the offset of the joysticks
 		self.joystickOffset = joystickOffset
 		
