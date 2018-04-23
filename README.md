@@ -1,9 +1,21 @@
 # Mate competition resources
 
-## aifeuafa
+----
 
-### jaesbflasbfakjfs
+## `Python` documentation
 
-#### `yeet` hello
-GitHub repository for mate ROV competition code resources.
+### `Class` moterController
 
+----
+
+#### `Float` moterController.safeDivide()
+Division that catches the error `ZeroDivisionError` thrown when dividing by zero.
+
+#### `Void` moterController.update(self, joystick1X, joystick1Y, joystick2X, joystick2Y)
+Updates the motors according to the joystick data passed.
+
+
+
+----
+
+## `Arduino` documentation
