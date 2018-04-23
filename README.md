@@ -1,10 +1,13 @@
-# Mate competition resources
-
+# Mate project documentation
 ----
 
-## Python documentation
+## Python
 
 ----
+### Main
+
+
+---
 
 ### `Class` moterController
 
