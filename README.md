@@ -2,7 +2,7 @@
 
 ----
 
-## `Python` documentation
+## Python documentation
 
 ### `Class` moterController
 
@@ -18,4 +18,4 @@ Updates the motors according to the joystick data passed.
 
 ----
 
-## `Arduino` documentation
+## Arduino documentation
