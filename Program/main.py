@@ -411,11 +411,13 @@ while done == False:
     
     
     # Compiling the moter speeds into one packet for the arduino
-    messageToMoterArduino = "{" + topLeftMoterByte + topRightMotorByte + bottomLeftMotorByte + bottomRightMotorByte + button + "}"
-    #print(messageToMoterArduino)
-    moterArduino.write(messageToMoterArduino) #message to arduino
+    if  moterPort != False:
+        messageToMoterArduino = "{" + topLeftMoterByte + topRightMotorByte + bottomLeftMotorByte + bottomRightMotorByte + button + "}"
+        #print(messageToMoterArduino)
+        moterArduino.write(messageToMoterArduino) #message to arduino
 
     if clawPort != False:
+
         if button == 1:
             clawCooldown = universalClock
 
@@ -423,9 +425,8 @@ while done == False:
 
 
         messageToClawArduino = button
-        print(messageToArduino)
-        clawArduino.write(messageToClawArduino)
 
+        clawArduino.write(messageToClawArduino)
     
     pygame.draw.circle(screen, (255,255,255), (DW_HALF + joystickVisualOffsetX + int(round((joystick.get_axis(0) * 30))), DH_HALF + joystickVisualOffsetY + int(round(joystick.get_axis(1) * 30))), 20, 0)    # EVENT PROCESSING STEP
 
