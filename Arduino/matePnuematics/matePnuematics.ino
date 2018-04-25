@@ -1,5 +1,5 @@
-int switchPin = 9;
-String message = "";
+int switchPin = 8;
+int message = 0;
 int hydrolicsCooldown = 0;
 bool hydrolicsActive = false;
 
@@ -21,15 +21,13 @@ void loop() {
     Serial.println(message); // print "Ready" once
   }
 
-  if(message == 49 and millis() - hydrolicsCooldown > 1000){
-    hydrolicsActive = not hydrolicsActive;
-    Serial.write(rightTrigger);
-    hydrolicsCooldown = millis();
-  }
-}
-
-if (hydrolicsActive) {
+// Why 49? Because 49 is the ascii code for the character '1'
+// Python sends 1 when the motors are active and 0 when they are not
+// and because message is the type 'int' the char is converted to ascii
+if (message == 49) {
     digitalWrite(switchPin, HIGH);
   } else{
     digitalWrite(switchPin, LOW);
   }
+}
+  

@@ -124,7 +124,7 @@ if __name__ == '__main__':
 
     moterPort = getPort("Select a port for moters: ")
 
-    #clawPort = getPort("Select a port for claw: ")
+    clawPort = getPort("Select a port for claw: ")
 
 
 
@@ -136,8 +136,8 @@ if __name__ == '__main__':
 
 if moterPort != False:
     moterArduino = serial.Serial(moterPort, 9600) # Establish the connection on a specific port
-# if clawPort != False:
-#     clawArduino = serial.Serial(clawPort, 9600) # Establish the connection on a specific port
+if clawPort != False:
+     clawArduino = serial.Serial(clawPort, 9600) # Establish the connection on a specific port
 
 # Serial packet variables
 packet = ""
@@ -311,6 +311,12 @@ motor1 = 0
 motor2 = 0
 motor3 = 0
 
+universalClock = 0
+
+# For claw to be active this variable needs to be equal to 1
+clawCooldown = 0
+clawActive = 0
+
 
 # ______________________________________________
 # Moter controller packet variable initializations
@@ -339,6 +345,7 @@ joystickVisualOffsetX = 0
 joystickVisualOffsetY = 0
 
 while done == False:
+    universalClock = universalClock + 1
     for event in pygame.event.get(): # User did something
         if event.type == pygame.QUIT: # If user clicked close
             done=True # Flag that we are done so we exit this loop
@@ -405,12 +412,19 @@ while done == False:
     
     # Compiling the moter speeds into one packet for the arduino
     messageToMoterArduino = "{" + topLeftMoterByte + topRightMotorByte + bottomLeftMotorByte + bottomRightMotorByte + button + "}"
-    print(messageToMoterArduino)
+    #print(messageToMoterArduino)
     moterArduino.write(messageToMoterArduino) #message to arduino
 
-    # if clawPort != False:
-    #     messageToClawArduino = button
-    #     clawArduino.write(messageToClawArduino)
+    if clawPort != False:
+        if button == 1:
+            clawCooldown = universalClock
+
+        #if universalClock - clawCooldown > 20:
+
+
+        messageToClawArduino = button
+        print(messageToArduino)
+        clawArduino.write(messageToClawArduino)
 
     
     pygame.draw.circle(screen, (255,255,255), (DW_HALF + joystickVisualOffsetX + int(round((joystick.get_axis(0) * 30))), DH_HALF + joystickVisualOffsetY + int(round(joystick.get_axis(1) * 30))), 20, 0)    # EVENT PROCESSING STEP
@@ -434,9 +448,9 @@ while done == False:
         textPrint.drawText(screen, "Button {:>2} value: {}".format(i,button) )
     textPrint.unindent()
    
-    if moterPort != False:
-        if moterArduino.in_waiting > 0:
-            pot = moterArduino.readline()
+    #if moterPort != False:
+        #if moterArduino.in_waiting > 0:
+            #pot = moterArduino.readline()
 
     # print(pot)
     textPrint.drawText(screen, "Diagnostics:")
