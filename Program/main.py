@@ -407,7 +407,9 @@ while done == False:
 
     bottomRightMotorByte = str(speedCharList[int(round((bottomRightMotor.moterOutput + 0.004) * 10)) + 10])
 
-    button = str(joystick.get_button(7))
+    clawButtion = str(joystick.get_button(7))
+
+    airButtion = str(joystick.get_button(8))
     
     
     # Compiling the moter speeds into one packet for the arduino
@@ -418,13 +420,13 @@ while done == False:
 
     if clawPort != False:
 
-        if button == 1:
+        if clawButtion == 1:
             clawCooldown = universalClock
 
         #if universalClock - clawCooldown > 20:
 
 
-        messageToClawArduino = button
+        messageToClawArduino = "{" + clawButtion + airButtion "}"
 
         clawArduino.write(messageToClawArduino)
     

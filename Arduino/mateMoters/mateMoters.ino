@@ -75,13 +75,6 @@ void loop() {
   //topLeftServo.writeMicroseconds(1500); 
   //delay(1000);
 
-
-  bottomRightServo.writeMicroseconds(bottomRightMotor); 
-  bottomLeftServo.writeMicroseconds(bottomLeftMotor); 
-  topLeftServo.writeMicroseconds(topLeftMotor); 
-  topRightServo.writeMicroseconds(topRightMotor); 
-
-
   if (millis() - lastpacket > 100){
     val = analogRead(potPin);
     //Serial.println(Motor0);
@@ -120,6 +113,12 @@ void loop() {
         bottomRightMotor = (((package.charAt(3) - 75) * 40) + 1500);
         bottomLeftMotor = (((package.charAt(4) - 75) * 40) + 1500);
         rightTrigger = package.charAt(5);
+        
+        bottomRightServo.writeMicroseconds(bottomRightMotor); 
+        bottomLeftServo.writeMicroseconds(bottomLeftMotor); 
+        topLeftServo.writeMicroseconds(topLeftMotor); 
+        topRightServo.writeMicroseconds(topRightMotor); 
+
         package = "";
       }
     }

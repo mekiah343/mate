@@ -1,12 +1,16 @@
-int switchPin = 8;
+int clawPin = 8;
+int airPin = 7;
 char message = '0';
-int hydrolicsCooldown = 0;
-bool hydrolicsActive = false;
+bool in_byte = true;
+String package = "";
+char clawByte = '0';
+char airByte = '0';
+
 
 void setup() {
   // Pin Setup
-  pinMode(switchPin, OUTPUT);
-  digitalWrite(switchPin, LOW);
+  pinMode(clawPin, OUTPUT);
+  digitalWrite(clawPin, LOW);
 
   // Serial Setup
   Serial.begin(9600); // set the baud rate
@@ -19,16 +23,42 @@ void loop() {
   if(Serial.available()){
     message = Serial.read();
     if (message == '1') {
-      digitalWrite(switchPin, HIGH);
+      digitalWrite(clawPin, HIGH);
     } else {
-      digitalWrite(switchPin, LOW);
+      digitalWrite(clawPin, LOW);
     }
   }
 
-// Why 49? Because 49 is the ascii code for the character '1'
-// Python sends 1 when the motors are active and 0 when they are not
-// and because message is the type 'int' the char is converted to ascii
+  if(Serial.available()){ // only send data back if data has been sent
+     message = Serial.read(); // read the incoming data
+     //Serial.println(message); // send the data back in a new line so that it is not all one long line
+    if (message == '{') {
+      in_byte = true;
+      package = package + message;
+    }
+    else if (in_byte) {
+      package = package + message;
+      if (message == '}') {
+        in_byte = false;
+        clawByte = package.charAt(1);
+        airByte = package.charAt(2);
+        package = "";
+      }
 
+    if (clawByte == '1') {
+      digitalWrite(clawPin, HIGH);
+    } else {
+      digitalWrite(clawPin, LOW);
+    }
+
+    if (airByte == '1') {
+      digitalWrite(airPin, HIGH);
+    } else {
+      digitalWrite(airPin, LOW);
+    }
+    
+  }
+ }
 }
 
   
