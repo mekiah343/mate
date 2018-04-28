@@ -4,6 +4,7 @@ import re
 import sys
 import glob
 from projectRes.motors.motor import motorController
+from projectRes.widgets import widget
 
 print("Booting MUROVISP...")
 
@@ -169,7 +170,7 @@ screen = pygame.display.set_mode(size)
 
 pygame.display.set_caption("Mekiah's Underwater Remotely Operated Vehicle Independent Software Project")
 
-#Loop until the user clicks the close button.
+#Loop until the user clicks the close button
 done = False
 
 # Used to manage how fast the screen updates
@@ -177,13 +178,21 @@ clock = pygame.time.Clock()
 
 # Initialize the joysticks
 pygame.joystick.init()
-    
+
 # Get ready to print
 textPrint = TextPrint()
 DISPLAY_WIDTH = 500 # screen width in pixels
 DISPLAY_HEIGHT = 700 # screen height in pixels
 DW_HALF = DISPLAY_WIDTH / 2
 DH_HALF = DISPLAY_HEIGHT / 2
+
+# ______________________________________________
+# Widget object initializations
+# ______________________________________________
+
+
+
+
 
 # ______________________________________________
 # Moter object initializations
@@ -388,51 +397,56 @@ while done == False:
     # Moter updating and serial communication
     # ______________________________________________
 
-
-    # Axis 1 = L joystick horizontal, Axis 2 = L joystick vertical, Axis 2 is some conbination of all axis, Axis 3 = R joystick horizonal, Axis 4 = R joystick vertical
-    topLeftMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
-    
-    topRightMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
-
-    bottomLeftMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
-
-    bottomRightMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
-
-
-    topLeftMoterByte = str(speedCharList[int(round((topLeftMotor.moterOutput + 0.004) * 10)) + 10])
-
-    topRightMotorByte = str(speedCharList[int(round((topRightMotor.moterOutput + 0.004) * 10)) + 10])
-
-    bottomLeftMotorByte = str(speedCharList[int(round((bottomLeftMotor.moterOutput + 0.004) * 10)) + 10])
-
-    bottomRightMotorByte = str(speedCharList[int(round((bottomRightMotor.moterOutput + 0.004) * 10)) + 10])
-
-    clawButtion = str(joystick.get_button(7))
-
-    airButtion = str(joystick.get_button(8))
-    
-    
-    # Compiling the moter speeds into one packet for the arduino
     if  moterPort != False:
-        messageToMoterArduino = "{" + topLeftMoterByte + topRightMotorByte + bottomLeftMotorByte + bottomRightMotorByte + button + "}"
+        # Axis 1 = L joystick horizontal, Axis 2 = L joystick vertical, Axis 2 is some conbination of all axis, Axis 3 = R joystick horizonal, Axis 4 = R joystick vertical
+        topLeftMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
+        
+        topRightMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
+
+        bottomLeftMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
+
+        bottomRightMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
+
+
+        topLeftMoterByte = str(speedCharList[int(round((topLeftMotor.moterOutput + 0.004) * 10)) + 10])
+
+        topRightMotorByte = str(speedCharList[int(round((topRightMotor.moterOutput + 0.004) * 10)) + 10])
+
+        bottomLeftMotorByte = str(speedCharList[int(round((bottomLeftMotor.moterOutput + 0.004) * 10)) + 10])
+
+        bottomRightMotorByte = str(speedCharList[int(round((bottomRightMotor.moterOutput + 0.004) * 10)) + 10])
+    
+    
+        # Compiling the moter speeds into one packet for the arduino
+
+        soundButtion = str(joystick.get_button(0))
+
+        messageToMoterArduino = "{" + topLeftMoterByte + topRightMotorByte + bottomLeftMotorByte + bottomRightMotorByte + soundButtion + "}"
         #print(messageToMoterArduino)
         moterArduino.write(messageToMoterArduino) #message to arduino
 
+
+
+        pygame.draw.circle(screen, (255,255,255), (DW_HALF + joystickVisualOffsetX + int(round((joystick.get_axis(0) * 30))), DH_HALF + joystickVisualOffsetY + int(round(joystick.get_axis(1) * 30))), 20, 0)    # EVENT PROCESSING STEP
+
     if clawPort != False:
 
-        if clawButtion == 1:
-            clawCooldown = universalClock
+        clawButtion = str(joystick.get_button(5))
+
+        airButtion = str(joystick.get_button(4))
+
+        #if clawButtion == 1:
+            #clawCooldown = universalClock
 
         #if universalClock - clawCooldown > 20:
 
 
-        messageToClawArduino = "{" + clawButtion + airButtion "}"
+        messageToClawArduino = "{" + clawButtion + airButtion + "}"
+        print(messageToClawArduino)
 
         clawArduino.write(messageToClawArduino)
     
-    pygame.draw.circle(screen, (255,255,255), (DW_HALF + joystickVisualOffsetX + int(round((joystick.get_axis(0) * 30))), DH_HALF + joystickVisualOffsetY + int(round(joystick.get_axis(1) * 30))), 20, 0)    # EVENT PROCESSING STEP
-
-
+    
 
     textPrint.indent()
     for i in range( axes ):
@@ -459,7 +473,7 @@ while done == False:
     textPrint.drawText(screen, "Diagnostics:")
     textPrint.indent()
     textPrint.drawText(screen, "Potentiometer 1: " + re.sub('\W+','', str(pot)))
-        
+    
 
     
     # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
@@ -474,4 +488,5 @@ while done == False:
 # If you forget this line, the program will 'hang'
 # on exit if running from IDLE.
 moterArduino.close()
+clawArduino.close()
 pygame.quit ()

@@ -25,6 +25,9 @@ byte topRightMotorPin = 9;
 byte topLeftMotorPin = 6;
 byte bottomLeftMotorPin = 5;
 
+char soundButton = 0;
+int soundPin = 11;
+
 #include <Servo.h>
 int light = 13;
 
@@ -41,6 +44,10 @@ void setup() {
 //Hydrolics setup
 pinMode(hydrolicsPin, OUTPUT);
 digitalWrite(hydrolicsPin, LOW);
+
+pinMode(soundPin, OUTPUT);
+digitalWrite(soundPin, LOW);
+
 
 //Serial Setup
 Serial.begin(9600); // set the baud rate
@@ -82,18 +89,6 @@ void loop() {
     count = count + 1;
   }
 
-  if(rightTrigger == 49 and millis() - hydrolicsCooldown > 1000){
-    hydrolicsActive = not hydrolicsActive;
-    Serial.write(rightTrigger);
-    hydrolicsCooldown = millis();
-  }
-  
-  if (hydrolicsActive) {
-    digitalWrite(hydrolicsPin, HIGH);
-  } else{
-    digitalWrite(hydrolicsPin, LOW);
-  }
-
 
   
   if(Serial.available()){ // only send data back if data has been sent
@@ -112,13 +107,21 @@ void loop() {
         topRightMotor = (((package.charAt(2) - 75) * 40) + 1500);
         bottomRightMotor = (((package.charAt(3) - 75) * 40) + 1500);
         bottomLeftMotor = (((package.charAt(4) - 75) * 40) + 1500);
-        rightTrigger = package.charAt(5);
+        soundButton = package.charAt(5);
+
         
         bottomRightServo.writeMicroseconds(bottomRightMotor); 
         bottomLeftServo.writeMicroseconds(bottomLeftMotor); 
         topLeftServo.writeMicroseconds(topLeftMotor); 
         topRightServo.writeMicroseconds(topRightMotor); 
+        if (soundButton == '1') {
+          digitalWrite(soundPin, HIGH);
+        } else {
+          digitalWrite(soundPin, LOW);
+        }
 
+
+        
         package = "";
       }
     }

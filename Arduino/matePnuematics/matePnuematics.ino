@@ -12,6 +12,9 @@ void setup() {
   pinMode(clawPin, OUTPUT);
   digitalWrite(clawPin, LOW);
 
+  pinMode(airPin, OUTPUT);
+  digitalWrite(airPin, LOW);
+
   // Serial Setup
   Serial.begin(9600); // set the baud rate
   //Serial.println("Ready"); // print "Ready" once
@@ -20,15 +23,6 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  if(Serial.available()){
-    message = Serial.read();
-    if (message == '1') {
-      digitalWrite(clawPin, HIGH);
-    } else {
-      digitalWrite(clawPin, LOW);
-    }
-  }
-
   if(Serial.available()){ // only send data back if data has been sent
      message = Serial.read(); // read the incoming data
      //Serial.println(message); // send the data back in a new line so that it is not all one long line

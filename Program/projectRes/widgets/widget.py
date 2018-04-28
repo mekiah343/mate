@@ -1,7 +1,7 @@
 
-class sphericalWidget:
+class circularWidget:
 
-	def __init__(self, position, size):
+	def __init__(self, _position, _diameter):
 		
 		self.position = {0, 0}
 		self.destPosition = {0,0}
@@ -10,12 +10,13 @@ class sphericalWidget:
 		self.transformSpeed = 1
 
 
-		self.size = {0, 0}
+		self.diameter = {0, 0}
 
-		self.position = position
-		self.size = size
+		self.position = _position
+		self.diameter = _diameter
 
-	def update():
+	def update(_destPosition):
+		self.destPosition = _destPosition
 		self.position[1] = lerp(self.position[1], self.destPosition[1], (self.tweenTime * self.transformSpeed))
 		self.position[2] = lerp(self.position[2], self.destPosition[2], (self.tweenTime * self.transformSpeed))
 

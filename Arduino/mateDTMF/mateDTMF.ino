@@ -11,7 +11,7 @@ const int STQ = 3;        // Attach DTMF Module STQ Pin to Arduino Digital Pin 3
 Servo SG5010;             // The SG5010 variable provides Servo functionality
  const int Q2 = 6;        // Attach DTMF Module Q2  Pin to Arduino Digital Pin 6
  const int Q1 = 7;        // Attach DTMF Module Q1  Pin to Arduino Digital Pin 7
-int code[]={2,3,1,5};
+int code[]={2,3};
 int C_indx=0;
 
 /*=========================================================================================================
@@ -46,7 +46,7 @@ if (DTMF_Detect() == code[C_indx]) {       //When a DTMF tone is detected, STQ w
       C_indx=0;
       Serial.println("BAD NUMBER");
     }
-    if (C_indx == 4)  {
+    if (C_indx == 2)  {
     Serial.println("yeet");
     servoPosition = 1500;
     SG5010.write(servoPosition);
