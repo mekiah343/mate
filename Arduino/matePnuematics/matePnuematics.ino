@@ -8,6 +8,7 @@ char airByte = '0';
 
 
 void setup() {
+  Serial.begin(9600); // set the baud rate
   // Pin Setup
   pinMode(clawPin, OUTPUT);
   digitalWrite(clawPin, LOW);
@@ -16,9 +17,8 @@ void setup() {
   digitalWrite(airPin, LOW);
 
   // Serial Setup
-  Serial.begin(9600); // set the baud rate
   //Serial.println("Ready"); // print "Ready" once
-  
+
 }
 
 void loop() {
@@ -50,9 +50,7 @@ void loop() {
     } else {
       digitalWrite(airPin, LOW);
     }
-    
+
   }
  }
 }
-
-  

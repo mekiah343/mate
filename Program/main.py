@@ -12,6 +12,17 @@ print("Booting MUROVISP...")
 
 
 
+# ______________________________________________
+# Color variable initializations
+# ______________________________________________
+
+# Yeah, this is only up here because WHITE needs to be defined in text drawing
+
+BLACK    = (0, 0, 0)
+WHITE    = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
 
 
 
@@ -25,19 +36,19 @@ class TextPrint:
         self.reset()
         self.font = pygame.font.Font(None, 27)
 
-    def drawText(self, screen, textString):
-        textBitmap = self.font.render(textString, True, WHITE)
+    def drawText(self, screen, textString, color = WHITE):
+        textBitmap = self.font.render(textString, True, color)
         screen.blit(textBitmap, [self.x, self.y])
         self.y += self.line_height
-        
+
     def reset(self):
         self.x = 10
         self.y = 10
         self.line_height = 20
-        
+
     def indent(self):
         self.x += 10
-        
+
     def unindent(self):
         self.x -= 10
 
@@ -145,25 +156,13 @@ packet = ""
 packet_rec = False
 inbyte = ""
 
-    
-
-# ______________________________________________
-# Color variable initializations
-# ______________________________________________
-
-BLACK    = (0, 0, 0)
-WHITE    = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-
 # ______________________________________________
 # Pygame variable initializations
 # ______________________________________________
 
 # Initialize pygame
 pygame.init()
-   
+
 # Set the width and height of the screen [width,height]
 size = [900, 600]
 screen = pygame.display.set_mode(size)
@@ -202,7 +201,7 @@ DH_HALF = DISPLAY_HEIGHT / 2
 
 
 topLeftMotor = motorController(
-    [        
+    [
         {
             "joystick1xStates":{
                 1:-1,
@@ -230,7 +229,7 @@ topLeftMotor = motorController(
 )
 
 topRightMotor = motorController(
-    [        
+    [
         {
             "joystick1xStates":{
                 1:1,
@@ -258,7 +257,7 @@ topRightMotor = motorController(
 )
 
 bottomLeftMotor = motorController(
-    [        
+    [
         {
             "joystick1xStates":{
                 1:0,
@@ -286,7 +285,7 @@ bottomLeftMotor = motorController(
 )
 
 bottomRightMotor = motorController(
-    [        
+    [
         {
             "joystick1xStates":{
                 1:0,
@@ -319,6 +318,8 @@ motor0 = 0
 motor1 = 0
 motor2 = 0
 motor3 = 0
+
+isError = False
 
 universalClock = 0
 
@@ -358,14 +359,14 @@ while done == False:
     for event in pygame.event.get(): # User did something
         if event.type == pygame.QUIT: # If user clicked close
             done=True # Flag that we are done so we exit this loop
-        
+
         # Possible joystick actions: JOYAXISMOTION JOYBALLMOTION JOYBUTTONDOWN JOYBUTTONUP JOYHATMOTION
         #if event.type == pygame.JOYBUTTONDOWN:
             #print("Joystick button pressed.")
         #if event.type == pygame.JOYBUTTONUP:
             #print("Joystick button released.")
-            
- 
+
+
     # DRAWING STEP
     # First, clear the screen to white. Don't put other drawing commands
     # above this, or they will be erased with this command.
@@ -377,7 +378,7 @@ while done == False:
 
     # textPrint.drawText(screen, "Number of joysticks: {}".format(joystick_count) )
     # textPrint.indent()
-    
+
     # For each joystick:
     textPrint.drawText(screen, "Joystick Thrust:")
     textPrint.indent()
@@ -391,7 +392,7 @@ while done == False:
 
 
     pygame.draw.circle(screen, (255,255,255), (DW_HALF + motorVisualOffsetX, DH_HALF + motorVisualOffsetY), 100, 0)    # EVENT PROCESSING STEP
-    
+
 
     # ______________________________________________
     # Moter updating and serial communication
@@ -400,7 +401,7 @@ while done == False:
     if  moterPort != False:
         # Axis 1 = L joystick horizontal, Axis 2 = L joystick vertical, Axis 2 is some conbination of all axis, Axis 3 = R joystick horizonal, Axis 4 = R joystick vertical
         topLeftMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
-        
+
         topRightMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
 
         bottomLeftMotor.update(joystick.get_axis(0), joystick.get_axis(1), joystick.get_axis(3), joystick.get_axis(4))
@@ -415,8 +416,8 @@ while done == False:
         bottomLeftMotorByte = str(speedCharList[int(round((bottomLeftMotor.moterOutput + 0.004) * 10)) + 10])
 
         bottomRightMotorByte = str(speedCharList[int(round((bottomRightMotor.moterOutput + 0.004) * 10)) + 10])
-    
-    
+
+
         # Compiling the moter speeds into one packet for the arduino
 
         soundButtion = str(joystick.get_button(0))
@@ -444,9 +445,14 @@ while done == False:
         messageToClawArduino = "{" + clawButtion + airButtion + "}"
         print(messageToClawArduino)
 
-        clawArduino.write(messageToClawArduino)
-    
-    
+        try:
+            clawArduino.write(messageToClawArduino)
+            isError = False
+        except:
+            isError = True
+            clawArduino = 0
+
+
 
     textPrint.indent()
     for i in range( axes ):
@@ -458,13 +464,13 @@ while done == False:
     textPrint.unindent()
     textPrint.drawText(screen, "Number of buttons: {}".format(buttons) )
     textPrint.indent()
-    
-    
+
+
     for i in range( buttons ):
         button = joystick.get_button( i )
         textPrint.drawText(screen, "Button {:>2} value: {}".format(i,button) )
     textPrint.unindent()
-   
+
     #if moterPort != False:
         #if moterArduino.in_waiting > 0:
             #pot = moterArduino.readline()
@@ -473,17 +479,23 @@ while done == False:
     textPrint.drawText(screen, "Diagnostics:")
     textPrint.indent()
     textPrint.drawText(screen, "Potentiometer 1: " + re.sub('\W+','', str(pot)))
-    
 
-    
+
+    if isError:
+        textPrint.unindent()
+        textPrint.drawText(screen, "")
+        textPrint.drawText(screen, "Claw port is down. Attepting to reconnect...", RED)
+
+
+
     # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
-    
+
     # Go ahead and update the screen with what we've drawn.
     pygame.display.flip()
 
     # Limit to 20 frames per second
     clock.tick(75)
-    
+
 # Close the window and quit.
 # If you forget this line, the program will 'hang'
 # on exit if running from IDLE.
