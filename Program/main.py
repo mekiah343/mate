@@ -3,6 +3,7 @@ import serial
 import re
 import sys
 import glob
+import time
 from projectRes.motors.motor import motorController
 from projectRes.widgets import widget
 
@@ -36,7 +37,10 @@ class TextPrint:
         self.reset()
         self.font = pygame.font.Font(None, 27)
 
-    def drawText(self, screen, textString, color = WHITE):
+    def drawText(self, screen, textString, color = WHITE, fontSize = 27):
+
+        self.font = pygame.font.Font(None, fontSize)
+
         textBitmap = self.font.render(textString, True, color)
         screen.blit(textBitmap, [self.x, self.y])
         self.y += self.line_height
@@ -96,6 +100,14 @@ def getPort(_prompt):
         raw_input('[Error]: Port not available, select a valid port. Press enter to continue.')
         consoleBreakLine()
         getPort(_prompt)
+
+
+def connectClawPort(portPhrase):
+    availablePorts = serial_ports()
+
+    for i in availablePorts:
+        if portPhrase in i:
+            return i
 
 # Returns a list of serial ports
 def serial_ports():
@@ -319,8 +331,6 @@ motor1 = 0
 motor2 = 0
 motor3 = 0
 
-isError = False
-
 universalClock = 0
 
 # For claw to be active this variable needs to be equal to 1
@@ -353,6 +363,23 @@ motorVisualOffsetX = 200
 motorVisualOffsetY = -225
 joystickVisualOffsetX = 0
 joystickVisualOffsetY = 0
+
+
+
+
+clawError = False
+
+dotMax = 5
+dotRate = 20
+dotCount = 0
+
+errorFlashRate = 2
+errorColors = [(255, 0, 0), (219, 0, 0)]
+errorBright = True
+
+
+
+
 
 while done == False:
     universalClock = universalClock + 1
@@ -443,15 +470,12 @@ while done == False:
 
 
         messageToClawArduino = "{" + clawButtion + airButtion + "}"
-        print(messageToClawArduino)
 
         try:
             clawArduino.write(messageToClawArduino)
-            isError = False
+            clawError = False
         except:
-            isError = True
-            clawArduino = 0
-
+            clawError = True
 
 
     textPrint.indent()
@@ -481,11 +505,46 @@ while done == False:
     textPrint.drawText(screen, "Potentiometer 1: " + re.sub('\W+','', str(pot)))
 
 
-    if isError:
+    if clawError:
         textPrint.unindent()
         textPrint.drawText(screen, "")
-        textPrint.drawText(screen, "Claw port is down. Attepting to reconnect...", RED)
 
+        if universalClock % dotRate == 1:
+            if dotCount == dotMax:
+                dotCount = 0
+            dotCount = dotCount + 1
+
+        dotString = ""
+        for _ in range(dotCount):
+            dotString = dotString + "."
+
+        if universalClock % errorFlashRate == 1:
+            errorBright = not errorBright
+
+        textPrint.drawText(screen, "Claw port is down. Attepting to reconnect" + dotString, errorColors[errorBright], 24)
+
+
+    if clawError == False:
+        textPrint.unindent()
+        textPrint.drawText(screen, "")
+        textPrint.drawText(screen, "Claw is operational", GREEN, 22)
+
+    if clawError == True:
+        moterArduino.write("{" + "KKKK0" + "}")
+        clawError = False
+        fetchedClawPort = connectClawPort("usbmodem")
+        print(fetchedClawPort)
+
+        clawArduino.close()
+        moterArduino.close()
+
+        clawArduino = 0
+        moterArduino = 0
+
+        clawArduino = serial.Serial(fetchedClawPort, 9600)
+        moterArduino = serial.Serial(moterPort, 9600)
+
+        print("sucsess!")
 
 
     # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
